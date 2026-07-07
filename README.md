@@ -36,7 +36,7 @@ Sistema de Noticias es una aplicación web que permite administrar y publicar no
 
 ## 2. Arquitectura
 
-El proyecto sigue una arquitectura **MVC** clásica en PHP nativo (sin frameworks), organizada así:
+El proyecto sigue una arquitectura **MVC** clásica en PHP nativo, organizada así:
 
 ```
 / (raíz del proyecto)
