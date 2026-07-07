@@ -1,0 +1,176 @@
+/* ==========================================================================
+   Sistema de Noticias - Estilos del panel administrativo
+   ========================================================================== */
+
+:root {
+    --color-primary: #1a3b6d;
+    --color-primary-dark: #10254a;
+    --color-accent: #c0392b;
+    --color-bg: #eef1f6;
+    --color-card: #ffffff;
+    --color-text: #232323;
+    --color-muted: #6b7280;
+    --radius: 8px;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
+a { color: var(--color-primary); }
+
+.admin-topbar {
+    background: var(--color-primary-dark);
+    color: #fff;
+    padding: 0.8rem 1.4rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.admin-brand { font-size: 1.2rem; font-weight: 700; display: flex; gap: 0.4rem; align-items: center; }
+.admin-user { display: flex; align-items: center; gap: 0.8rem; font-size: 0.9rem; }
+
+.admin-menu {
+    background: var(--color-primary);
+    display: flex;
+    flex-wrap: wrap;
+    padding: 0 1rem;
+}
+
+.admin-menu a {
+    color: #dbe4f0;
+    padding: 0.7rem 1rem;
+    display: inline-block;
+    font-size: 0.9rem;
+}
+.admin-menu a:hover, .admin-menu a.active {
+    background: rgba(255, 255, 255, 0.12);
+    text-decoration: none;
+    color: #fff;
+}
+.admin-menu .menu-home { margin-left: auto; font-weight: 600; }
+
+.admin-content {
+    max-width: 1200px;
+    margin: 1.5rem auto;
+    padding: 0 1.2rem 2rem;
+}
+
+.card {
+    background: var(--color-card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1.4rem;
+    margin-bottom: 1.2rem;
+}
+
+h1, h2, h3 { color: var(--color-primary-dark); }
+
+table { width: 100%; border-collapse: collapse; background: var(--color-card); border-radius: var(--radius); overflow: hidden; }
+th, td { padding: 0.6rem 0.8rem; text-align: left; border-bottom: 1px solid #e5e7eb; font-size: 0.92rem; }
+th { background: #f1f5f9; color: var(--color-primary-dark); }
+tr:hover { background: #f9fafb; }
+.table-responsive { overflow-x: auto; }
+
+.thumb-cell img { width: 70px; height: 50px; object-fit: cover; border-radius: 4px; }
+
+input, select, textarea, button { font-family: inherit; font-size: 0.95rem; }
+input[type=text], input[type=search], input[type=email], input[type=password], input[type=date], select, textarea {
+    padding: 0.5rem 0.6rem;
+    border: 1px solid #cbd5e1;
+    border-radius: var(--radius);
+    width: 100%;
+}
+textarea { min-height: 140px; resize: vertical; }
+label { font-weight: 600; font-size: 0.88rem; display: block; margin-bottom: 0.3rem; }
+.form-group { margin-bottom: 1rem; }
+.form-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+.form-row .form-group { flex: 1; min-width: 200px; }
+
+.btn {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+    border: none;
+    cursor: pointer;
+    background: var(--color-primary);
+    color: #fff;
+    font-weight: 600;
+    text-decoration: none;
+}
+.btn:hover { background: var(--color-primary-dark); }
+.btn-danger { background: var(--color-accent); }
+.btn-danger:hover { background: #922b21; }
+.btn-success { background: #15803d; }
+.btn-secondary { background: #64748b; }
+.btn-small { padding: 0.3rem 0.7rem; font-size: 0.82rem; }
+
+.actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+.badge { display: inline-block; padding: 0.15rem 0.55rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
+.badge-success { background: #dcfce7; color: #166534; }
+.badge-danger { background: #fee2e2; color: #991b1b; }
+.badge-warning { background: #fef3c7; color: #92400e; }
+.badge-muted { background: #e5e7eb; color: #374151; }
+
+.pagination { display: flex; gap: 0.4rem; margin-top: 1rem; flex-wrap: wrap; }
+.pagination a, .pagination span { padding: 0.4rem 0.75rem; border-radius: var(--radius); background: #fff; box-shadow: var(--shadow); }
+.pagination .current { background: var(--color-primary); color: #fff; font-weight: 700; }
+
+.alert { padding: 0.8rem 1rem; border-radius: var(--radius); margin-bottom: 1rem; }
+.alert-success { background: #dcfce7; color: #166534; }
+.alert-error { background: #fee2e2; color: #991b1b; }
+.alert-info { background: #dbeafe; color: #1e40af; }
+
+.field-error { color: #b91c1c; font-size: 0.82rem; margin-top: 0.2rem; }
+
+.login-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+    padding: 1rem;
+}
+.login-card {
+    background: #fff;
+    padding: 2rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    width: 100%;
+    max-width: 380px;
+}
+.login-card h1 { text-align: center; font-size: 1.3rem; }
+
+.dashboard-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
+.stat-card { background: var(--color-card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.2rem; text-align: center; }
+.stat-card .stat-value { font-size: 2rem; font-weight: 800; color: var(--color-primary); }
+.stat-card .stat-label { color: var(--color-muted); font-size: 0.85rem; }
+
+.image-preview-grid { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.6rem; }
+.image-preview-grid img { width: 90px; height: 65px; object-fit: cover; border-radius: 4px; box-shadow: var(--shadow); }
+
+.detail-images { display: flex; gap: 0.8rem; flex-wrap: wrap; margin: 1rem 0; }
+.detail-images img { width: 220px; height: 150px; object-fit: cover; border-radius: var(--radius); box-shadow: var(--shadow); }
+
+.integrity-ok { color: #166534; font-weight: 700; }
+.integrity-fail { color: #991b1b; font-weight: 700; }
+
+@media (max-width: 700px) {
+    .admin-menu { flex-direction: column; }
+    .admin-menu .menu-home { margin-left: 0; }
+    table, thead, tbody, th, td, tr { display: block; }
+    thead { display: none; }
+    td { border: none; border-bottom: 1px solid #f1f5f9; padding-left: 45%; position: relative; }
+    td::before { content: attr(data-label); position: absolute; left: 0.8rem; font-weight: 700; width: 40%; }
+    tr { margin-bottom: 0.8rem; border: 1px solid #e5e7eb; border-radius: var(--radius); }
+}
