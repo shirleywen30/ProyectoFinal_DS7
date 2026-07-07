@@ -11,7 +11,7 @@ Brian Lee 8-1031-2047
 
 Shirley Wen, 8-957-1526
 
----
+___
 
 **Materia:** Desarrollo de Software VII
 
@@ -19,7 +19,7 @@ Shirley Wen, 8-957-1526
 
 **Fecha de entrega:** 22/7/26
 
----
+***
 
 ## Enlace al video de demostración
 
