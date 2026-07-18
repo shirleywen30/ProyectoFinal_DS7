@@ -4,13 +4,22 @@ Proyecto final desarrollado en **PHP nativo (8.x) + MySQL**, siguiendo arquitect
 
 ## Integrantes
 Jose Barahona, 8-939-51
+
 Luis Jiménez, 8-1018-1285
+
 Brian Lee 8-1031-2047 
+
 Shirley Wen, 8-957-1526
 
+___
+
 **Materia:** Desarrollo de Software VII
+
 **Docente:** Irina Fong
+
 **Fecha de entrega:** 22/7/26
+
+***
 
 ## Enlace al video de demostración
 
@@ -27,7 +36,7 @@ Sistema de Noticias es una aplicación web que permite administrar y publicar no
 
 ## 2. Arquitectura
 
-El proyecto sigue una arquitectura **MVC** clásica en PHP nativo (sin frameworks), organizada así:
+El proyecto sigue una arquitectura **MVC** clásica en PHP nativo, organizada así:
 
 ```
 / (raíz del proyecto)
