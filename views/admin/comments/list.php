@@ -1,6 +1,15 @@
 <?php
 require_once __DIR__ . '/../../../config/bootstrap.php';
 
+if (!isLoggedIn()) {
+    redirectTo(BASE_URL . '/views/admin/login.php');
+}
+
+if (!in_array($_SESSION['user_role'] ?? '', ['admin', 'supervisor'], true)) {
+    http_response_code(403);
+    die('Acceso denegado: no cuenta con los permisos necesarios.');
+}
+
 $controller = new CommentController();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -46,7 +55,7 @@ require ROOT_PATH . '/views/partials/admin_menu.php';
         <button type="submit" class="btn btn-secondary">Filtrar</button>
     </form>
 
-    <div class="table-responsive" style="margin-top:1rem">
+    <div class="table-responsive">
         <table>
             <thead>
                 <tr><th>Noticia</th><th>Usuario</th><th>Comentario</th><th>Estado</th><th>Fecha</th><th>Acciones</th></tr>

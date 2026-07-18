@@ -24,8 +24,11 @@ require ROOT_PATH . '/views/partials/admin_menu.php';
         <a href="<?= BASE_URL ?>/views/admin/users/form.php" class="btn">+ Nuevo usuario</a>
     </div>
 
-    <form method="get" action="<?= BASE_URL ?>/views/admin/users/list.php" style="margin:1rem 0;display:flex;gap:0.6rem">
-        <input type="search" name="buscar" placeholder="Buscar por nombre o correo..." value="<?= e($term) ?>">
+    <form method="get" action="<?= BASE_URL ?>/views/admin/users/list.php" class="filters-bar">
+        <div class="field">
+            <label>Buscar</label>
+            <input type="search" name="buscar" placeholder="Nombre o correo..." value="<?= e($term) ?>">
+        </div>
         <button type="submit" class="btn btn-secondary">Buscar</button>
     </form>
 

@@ -25,9 +25,12 @@ ini_set('display_errors', APP_ENV === 'production' ? '0' : '1');
 
 require_once ROOT_PATH . '/core/interfaces/CrudInterface.php';
 require_once ROOT_PATH . '/core/interfaces/ErrorHandlerInterface.php';
+require_once ROOT_PATH . '/core/interfaces/HashServiceInterface.php';
 require_once ROOT_PATH . '/core/ErrorHandler.php';
 require_once ROOT_PATH . '/core/Database.php';
 require_once ROOT_PATH . '/core/Validator.php';
+require_once ROOT_PATH . '/core/PasswordHashService.php';
+require_once ROOT_PATH . '/core/SignatureHashService.php';
 require_once ROOT_PATH . '/core/Security.php';
 require_once ROOT_PATH . '/core/BaseModel.php';
 require_once ROOT_PATH . '/core/BaseController.php';

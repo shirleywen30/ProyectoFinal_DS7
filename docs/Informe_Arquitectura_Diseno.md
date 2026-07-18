@@ -24,6 +24,14 @@ Este documento describe la arquitectura, los requisitos y el diseño técnico de
 | RF-14 | El sitio público debe permitir a cualquier visitante comentar una noticia; el comentario queda pendiente de aprobación administrativa. |
 | RF-15 | El sistema debe contabilizar y mostrar el número de visitantes del sitio público. |
 | RF-16 | Todos los módulos (administrativo y público) deben ofrecer un enlace de regreso a la página de inicio. |
+| RF-17 | El sistema debe soportar tres roles de usuario administrativo (admin, supervisor, editor) con permisos diferenciados: el editor solo crea/modifica sus propias noticias y no puede publicarlas; el supervisor puede crear, modificar y publicar cualquier noticia, y moderar comentarios (aprobar/bloquear/eliminar); el administrador tiene acceso total, incluyendo la gestión de usuarios y la respuesta a comentarios. |
+| RF-18 | El panel administrativo debe permitir filtrar las estadísticas del dashboard por período de tiempo (últimos 7 días, 1, 3, 6 o 12 meses, o todo el tiempo), no solo en forma acumulada. |
+| RF-19 | Toda noticia debe permitir asociar opcionalmente un video mediante enlace de YouTube o Vimeo, embebido automáticamente en el detalle público. |
+| RF-20 | El detalle público de una noticia debe mostrar una imagen de cabecera destacada y el autor/usuario que la publicó. |
+| RF-21 | El sitio público debe permitir reaccionar a una noticia con al menos 2-3 tipos de reacción distintos (cada uno con su propio icono), limitado a una reacción por visitante. |
+| RF-22 | La búsqueda de noticias (administrativa y pública) debe ser insensible a mayúsculas/minúsculas. |
+| RF-23 | El sitio público debe ofrecer una sección informativa ("Nosotros") con las tecnologías utilizadas, el valor/beneficios del proyecto y los datos de contacto del equipo desarrollador. |
+| RF-24 | Además de la baja lógica (RF-06), un administrador o supervisor debe poder eliminar una noticia de forma permanente; al hacerlo, el sistema debe borrar también sus imágenes físicas del disco y sus comentarios/reacciones asociados. |
 
 ## 3. Requisitos no funcionales (RNF)
 
@@ -51,6 +59,14 @@ Las contraseñas de usuarios administrativos deben tener entre 8 y 12 caracteres
 Toda noticia debe incluir un mecanismo de verificación de integridad que permita detectar si su contenido fue alterado fuera del flujo normal de la aplicación (por ejemplo, mediante una modificación directa en la base de datos).
 **Implementación:** `Security::generateSignature()` calcula un HMAC-SHA256 sobre los campos `titulo`, `contenido`, `id_usuario` y `created_at` de cada noticia, usando una clave secreta de la aplicación (`SIGNATURE_SECRET_KEY`). La firma se almacena en el campo `firma_digital` y se recalcula/verifica en `NewsController::verifyIntegrity()`, mostrando el resultado en la vista de detalle administrativo de la noticia (`views/admin/news/detail.php`).
 
+### RNF-07: Contrato de interfaz para servicios criptográficos
+Las operaciones criptográficas de transformación de datos (hashing) deben unificarse bajo un mismo contrato de comportamiento, en vez de implementarse de forma dispersa o solo mediante llamadas directas a funciones nativas de PHP.
+**Implementación:** `core/interfaces/HashServiceInterface.php` define el contrato (`hash()`/`verify()`). `core/PasswordHashService.php` (bcrypt) y `core/SignatureHashService.php` (HMAC-SHA256) lo implementan de forma intercambiable (SOLID - Inversión de Dependencias). `core/Security.php` actúa como fachada delgada que delega en ambos servicios, preservando su API estática ya usada en el resto del sistema.
+
+### RNF-08: Control de acceso basado en roles (RBAC)
+Cada acción administrativa debe validar en el servidor que el rol del usuario en sesión tenga el permiso correspondiente, además de ocultar en la interfaz las opciones no disponibles para ese rol.
+**Implementación:** `core/BaseController.php::requireRole()` (ya existente, reutilizado por `UserController` y `CategoryController`); `NewsController::isPrivileged()`/`canModify()` para la restricción de edición/publicación de noticias por propiedad y rol; `CommentController::requireModerator()` y la verificación de rol `admin` en `reply()` para la moderación de comentarios; `views/partials/admin_menu.php` oculta las secciones sin permiso.
+
 ## 4. Diagrama de casos de uso
 
 Ver [`Diagramas_UML.md`](Diagramas_UML.md#1-diagrama-de-casos-de-uso).
@@ -71,6 +87,10 @@ Ver [`Diagramas_UML.md`](Diagramas_UML.md#4-diagrama-de-estados-cuenta-de-usuari
 
 Ver [`Diagramas_UML.md`](Diagramas_UML.md#5-diagrama-entidad-relación-der).
 
+### 8.1 Modelo de Dominio (UML) y flujos de interacción (IFML)
+
+Ver [`Modelo_Dominio_IFML.md`](Modelo_Dominio_IFML.md): modelo de dominio UML limitado a las entidades de negocio (sin infraestructura), y diagramas de flujo de interacción (IFML) del sitio público y del panel administrativo, incluyendo las restricciones de navegación por rol descritas en RF-17 y RNF-08.
+
 ## 9. Diccionario de datos
 
 ### Tabla `usuarios`
@@ -80,7 +100,7 @@ Ver [`Diagramas_UML.md`](Diagramas_UML.md#5-diagrama-entidad-relación-der).
 | nombre | VARCHAR(100) | Nombre completo o usuario de acceso. |
 | email | VARCHAR(150) | Correo electrónico, único, usado también para iniciar sesión. |
 | password | VARCHAR(255) | Hash bcrypt de la contraseña (`password_hash`). |
-| rol | ENUM('admin','editor') | Rol del usuario dentro del sistema. |
+| rol | ENUM('admin','editor','supervisor') | Rol del usuario dentro del sistema (ver RF-17). |
 | activo | TINYINT(1) | 1 = activo, 0 = desactivado (no puede iniciar sesión). |
 | intentos_fallidos | INT UNSIGNED | Contador de intentos fallidos consecutivos de login. |
 | bloqueado_hasta | DATETIME (NULL) | Fecha/hora hasta la cual la cuenta permanece bloqueada. |
@@ -103,6 +123,7 @@ Ver [`Diagramas_UML.md`](Diagramas_UML.md#5-diagrama-entidad-relación-der).
 | contenido | TEXT | Cuerpo/párrafos de la noticia (HTML restringido). |
 | id_usuario | INT UNSIGNED (FK → usuarios.id) | Usuario del sistema que creó la noticia. |
 | autor | VARCHAR(120) (NULL) | Autor visible, opcional (puede diferir del usuario creador). |
+| video_url | VARCHAR(255) (NULL) | Enlace de YouTube/Vimeo, embebido automáticamente en el detalle público (RF-19). |
 | id_categoria | INT UNSIGNED (FK → categorias.id) | Categoría asociada. |
 | publicado | TINYINT(1) | 1 = visible en el sitio público, 0 = borrador. |
 | activo | TINYINT(1) | Baja lógica (1 = activa, 0 = dada de baja). |
@@ -137,7 +158,7 @@ Ver [`Diagramas_UML.md`](Diagramas_UML.md#5-diagrama-entidad-relación-der).
 |---|---|---|
 | id | INT UNSIGNED (PK) | Identificador único. |
 | id_noticia | INT UNSIGNED (FK → noticias.id) | Noticia reaccionada. |
-| tipo | VARCHAR(20) | Tipo de reacción (por defecto `like`). |
+| tipo | VARCHAR(20) | Tipo de reacción: `like` (Me gusta), `eco` (Ecológica) o `interesante` (ver RF-21). |
 | ip_address | VARCHAR(45) | IP del visitante (control de unicidad). |
 | created_at | DATETIME | Fecha de la reacción. |
 

@@ -48,3 +48,10 @@ define('ALLOWED_IMAGE_MIMES', ['image/jpeg', 'image/png', 'image/webp']);
 
 define('APP_NAME', 'Sistema de Noticias');
 define('APP_ENV', 'development'); // development | production
+
+// Tipos de reacción disponibles en el detalle público de noticias.
+define('REACTION_TYPES', [
+    'like' => ['icon' => '&#10084;', 'label' => 'Me gusta'],
+    'eco' => ['icon' => '&#127793;', 'label' => 'Ecológica'],
+    'interesante' => ['icon' => '&#128161;', 'label' => 'Interesante'],
+]);

@@ -15,10 +15,17 @@
             <nav class="site-menu">
                 <a href="<?= BASE_URL ?>/index.php" class="<?= ($activeMenu ?? '') === 'home' ? 'active' : '' ?>">Inicio</a>
                 <a href="<?= BASE_URL ?>/views/public/all-news.php" class="<?= ($activeMenu ?? '') === 'news' ? 'active' : '' ?>">Noticias</a>
-                <?php foreach ($menuCategories ?? [] as $cat): ?>
-                    <a href="<?= BASE_URL ?>/views/public/all-news.php?categoria=<?= (int) $cat['id'] ?>"><?= e($cat['nombre']) ?></a>
-                <?php endforeach; ?>
+                <a href="<?= BASE_URL ?>/views/public/about.php" class="<?= ($activeMenu ?? '') === 'about' ? 'active' : '' ?>">Nosotros</a>
             </nav>
+            <div class="site-account">
+                <?php if (isLoggedIn()): ?>
+                    <span class="site-account-name">Hola, <strong><?= e(currentUserName()) ?></strong></span>
+                    <a href="<?= BASE_URL ?>/views/admin/dashboard.php" class="btn btn-small">Panel admin</a>
+                    <a href="<?= BASE_URL ?>/views/admin/logout.php" class="btn btn-small btn-secondary">Cerrar sesión</a>
+                <?php else: ?>
+                    <a href="<?= BASE_URL ?>/views/admin/login.php" class="btn btn-small">&#128100; Iniciar sesión</a>
+                <?php endif; ?>
+            </div>
         </div>
     </header>
     <main class="site-content">

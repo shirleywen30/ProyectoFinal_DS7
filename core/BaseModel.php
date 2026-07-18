@@ -100,4 +100,20 @@ abstract class BaseModel implements CrudInterface
         $stmt->execute($params);
         return (int) $stmt->fetch()['total'];
     }
+
+    /** Cuenta filas cuya columna de fecha sea >= $from; sin filtro (total) si $from es null. */
+    public function countSince(string $dateColumn, ?string $from): int
+    {
+        $sql = "SELECT COUNT(*) AS total FROM {$this->table}";
+        $params = [];
+
+        if ($from !== null) {
+            $sql .= " WHERE {$dateColumn} >= :from";
+            $params['from'] = $from;
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return (int) $stmt->fetch()['total'];
+    }
 }

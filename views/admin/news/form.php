@@ -10,6 +10,12 @@ if ($id !== null && $news === null) {
     redirectTo(BASE_URL . '/views/admin/news/list.php');
 }
 
+if ($news !== null && !$controller->canModify($news)) {
+    $_SESSION['flash'] = ['type' => 'error', 'message' => 'No tiene permisos para modificar esta noticia.'];
+    redirectTo(BASE_URL . '/views/admin/news/list.php');
+}
+
+$isPrivileged = $controller->isPrivileged();
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -52,6 +58,11 @@ require ROOT_PATH . '/views/partials/admin_menu.php';
                 <input type="text" id="autor" name="autor" value="<?= e($_POST['autor'] ?? $news['autor'] ?? '') ?>">
             </div>
             <div class="form-group">
+                <label for="video_url">Video (URL de YouTube/Vimeo, opcional)</label>
+                <input type="url" id="video_url" name="video_url" placeholder="https://www.youtube.com/watch?v=..." value="<?= e($_POST['video_url'] ?? $news['video_url'] ?? '') ?>">
+                <?php if (!empty($errors['video_url'])): ?><div class="field-error"><?= e($errors['video_url']) ?></div><?php endif; ?>
+            </div>
+            <div class="form-group">
                 <label for="id_categoria">Categoría</label>
                 <?php $catSel = $_POST['id_categoria'] ?? $news['id_categoria'] ?? ''; ?>
                 <select id="id_categoria" name="id_categoria" required>
@@ -65,10 +76,18 @@ require ROOT_PATH . '/views/partials/admin_menu.php';
             <div class="form-group">
                 <label for="publicado">Estado de publicación</label>
                 <?php $pubSel = $_POST['publicado'] ?? ($news['publicado'] ?? 0); ?>
-                <select id="publicado" name="publicado">
-                    <option value="1" <?= (string) $pubSel === '1' ? 'selected' : '' ?>>Publicado</option>
-                    <option value="0" <?= (string) $pubSel === '0' ? 'selected' : '' ?>>No publicado</option>
-                </select>
+                <?php if ($isPrivileged): ?>
+                    <select id="publicado" name="publicado">
+                        <option value="1" <?= (string) $pubSel === '1' ? 'selected' : '' ?>>Publicado</option>
+                        <option value="0" <?= (string) $pubSel === '0' ? 'selected' : '' ?>>No publicado</option>
+                    </select>
+                <?php else: ?>
+                    <input type="hidden" name="publicado" value="<?= (string) $pubSel ?>">
+                    <p style="color:#6b7280;font-size:0.85rem;margin:0.4rem 0 0">
+                        Solo un supervisor o administrador puede publicar. Estado actual:
+                        <strong><?= (string) $pubSel === '1' ? 'Publicado' : 'No publicado' ?></strong>
+                    </p>
+                <?php endif; ?>
             </div>
         </div>
 

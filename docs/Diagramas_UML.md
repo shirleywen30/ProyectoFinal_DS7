@@ -9,6 +9,7 @@ Los diagramas se presentan en formato **Mermaid** (texto), visualizable directam
 ```mermaid
 flowchart LR
     Admin((Administrador))
+    Supervisor((Supervisor))
     Editor((Editor))
     Visitante((Visitante público))
 
@@ -16,10 +17,12 @@ flowchart LR
         UC1[Iniciar sesión]
         UC2[Gestionar usuarios]
         UC3[Gestionar categorías]
-        UC4[Gestionar noticias]
-        UC5[Subir imágenes de noticia]
-        UC6[Gestionar comentarios]
-        UC7[Ver estadísticas de reacciones]
+        UC4[Crear / modificar noticias propias]
+        UC4b[Publicar cualquier noticia]
+        UC5[Subir imágenes y video de noticia]
+        UC6[Aprobar / bloquear / eliminar comentarios]
+        UC6b[Responder comentarios]
+        UC7[Ver estadísticas por período]
         UC8[Cerrar sesión]
     end
 
@@ -29,22 +32,32 @@ flowchart LR
         UC11[Filtrar / buscar noticias]
         UC12[Ver detalle de noticia]
         UC13[Comentar noticia]
-        UC14[Reaccionar con me gusta]
+        UC14[Reaccionar con icono]
+        UC15[Ver página "Nosotros"]
     end
 
     Admin --> UC1
     Admin --> UC2
     Admin --> UC3
     Admin --> UC4
+    Admin --> UC4b
     Admin --> UC6
+    Admin --> UC6b
     Admin --> UC7
     Admin --> UC8
     UC4 --> UC5
 
+    Supervisor --> UC1
+    Supervisor --> UC3
+    Supervisor --> UC4
+    Supervisor --> UC4b
+    Supervisor --> UC6
+    Supervisor --> UC7
+    Supervisor --> UC8
+
     Editor --> UC1
-    Editor --> UC3
     Editor --> UC4
-    Editor --> UC6
+    Editor --> UC7
     Editor --> UC8
     UC4 --> UC5
 
@@ -54,10 +67,12 @@ flowchart LR
     Visitante --> UC12
     UC12 --> UC13
     UC12 --> UC14
+    Visitante --> UC15
 ```
 
 **Notas:**
-- `Editor` no tiene acceso al caso de uso "Gestionar usuarios" (restringido al rol `admin` mediante `BaseController::requireRole('admin')`).
+- `Editor` no tiene acceso a "Gestionar usuarios", "Gestionar categorías", "Publicar cualquier noticia" ni a la moderación de comentarios (restringidos mediante `BaseController::requireRole()`, `NewsController::isPrivileged()`/`canModify()` y `CommentController::requireModerator()`).
+- Solo `Admin` puede responder comentarios (`CommentController::reply()`); `Supervisor` puede aprobar/bloquear/eliminar pero no responder.
 - Los casos de uso del visitante no requieren autenticación.
 
 ---
@@ -101,6 +116,24 @@ classDiagram
         +getErrors() array
     }
 
+    class HashServiceInterface {
+        <<interface>>
+        +hash(data) string
+        +verify(data, hash) bool
+    }
+
+    class PasswordHashService {
+        +hash(data) string
+        +verify(data, hash) bool
+    }
+    HashServiceInterface <|.. PasswordHashService
+
+    class SignatureHashService {
+        +hash(data) string
+        +verify(data, hash) bool
+    }
+    HashServiceInterface <|.. SignatureHashService
+
     class Security {
         +generateCsrfToken() string
         +validateCsrfToken(token) bool
@@ -109,6 +142,8 @@ classDiagram
         +generateSignature(fields) string
         +verifySignature(fields, signature) bool
     }
+    Security --> PasswordHashService
+    Security --> SignatureHashService
 
     class ErrorHandler {
         +register()
@@ -182,9 +217,10 @@ classDiagram
     BaseModel <|-- CommentModel
 
     class ReactionModel {
-        +addLike(newsId, ip) bool
+        +addReaction(newsId, ip, tipo) bool
         +alreadyReacted(newsId, ip) bool
         +countByNews(newsId) int
+        +countByNewsGroupedByType(newsId) array
         +statsByNews() array
     }
     BaseModel <|-- ReactionModel
@@ -236,7 +272,10 @@ classDiagram
         +save(id) array
         +toggleActive(id)
         +togglePublished(id)
+        +deleteNews(id)
         +verifyIntegrity(news) bool
+        +isPrivileged() bool
+        +canModify(news) bool
     }
     BaseController <|-- NewsController
     NewsController --> NewsModel
@@ -250,12 +289,14 @@ classDiagram
         +approve(id)
         +block(id)
         +reply(id, respuesta)
+        -requireModerator()
     }
     BaseController <|-- CommentController
     CommentController --> CommentModel
 
     class ReactionController {
-        +like(newsId) array
+        +react(newsId, tipo) array
+        +countByNewsGroupedByType(newsId) array
         +stats() array
     }
     BaseController <|-- ReactionController
@@ -396,6 +437,7 @@ erDiagram
         text contenido
         int id_usuario FK
         varchar autor
+        varchar video_url
         int id_categoria FK
         tinyint publicado
         tinyint activo

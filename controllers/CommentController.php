@@ -70,27 +70,45 @@ class CommentController extends BaseController
         return [];
     }
 
+    /** Aprobar/bloquear/eliminar están reservados a admin y supervisor. */
+    private function requireModerator(): void
+    {
+        if (!in_array($_SESSION['user_role'] ?? '', ['admin', 'supervisor'], true)) {
+            http_response_code(403);
+            die('Acceso denegado: no cuenta con los permisos necesarios.');
+        }
+    }
+
     public function approve(int $id): void
     {
         $this->requireCsrf();
+        $this->requireModerator();
         $this->commentModel->updateStatus($id, 'aprobado');
     }
 
     public function block(int $id): void
     {
         $this->requireCsrf();
+        $this->requireModerator();
         $this->commentModel->updateStatus($id, 'bloqueado');
     }
 
     public function delete(int $id): void
     {
         $this->requireCsrf();
+        $this->requireModerator();
         $this->commentModel->delete($id);
     }
 
+    /** Responder comentarios está reservado exclusivamente al rol admin. */
     public function reply(int $id, string $respuesta): void
     {
         $this->requireCsrf();
+        if (($_SESSION['user_role'] ?? '') !== 'admin') {
+            http_response_code(403);
+            die('Acceso denegado: solo el administrador puede responder comentarios.');
+        }
+
         $respuesta = Validator::sanitizeString($respuesta);
         if ($respuesta !== '') {
             $this->commentModel->reply($id, $respuesta, (int) $_SESSION['user_id']);

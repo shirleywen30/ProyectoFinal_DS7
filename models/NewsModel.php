@@ -75,7 +75,7 @@ class NewsModel extends BaseModel
         }
 
         if (!empty($filters['buscar'])) {
-            $clauses[] = '(n.titulo LIKE :buscar1 OR n.autor LIKE :buscar2 OR u.nombre LIKE :buscar3)';
+            $clauses[] = '(LOWER(n.titulo) LIKE LOWER(:buscar1) OR LOWER(n.autor) LIKE LOWER(:buscar2) OR LOWER(u.nombre) LIKE LOWER(:buscar3))';
             $like = '%' . $filters['buscar'] . '%';
             $params['buscar1'] = $like;
             $params['buscar2'] = $like;

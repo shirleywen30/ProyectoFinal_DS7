@@ -16,14 +16,16 @@ USE sistema_noticias;
 
 -- -----------------------------------------------------------------------------
 -- Tabla: usuarios
--- Usuarios administrativos del sistema (rol admin / editor).
+-- Usuarios administrativos del sistema (rol admin / editor / supervisor).
+-- Si ya tiene la base de datos importada de una versión anterior, ejecute:
+--   ALTER TABLE usuarios MODIFY COLUMN rol ENUM('admin','editor','supervisor') NOT NULL DEFAULT 'editor';
 -- -----------------------------------------------------------------------------
 CREATE TABLE usuarios (
     id                INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     nombre            VARCHAR(100)        NOT NULL,
     email             VARCHAR(150)        NOT NULL,
     password          VARCHAR(255)        NOT NULL COMMENT 'Hash bcrypt (password_hash)',
-    rol               ENUM('admin','editor') NOT NULL DEFAULT 'editor',
+    rol               ENUM('admin','editor','supervisor') NOT NULL DEFAULT 'editor',
     activo            TINYINT(1)          NOT NULL DEFAULT 1,
     intentos_fallidos INT UNSIGNED        NOT NULL DEFAULT 0,
     bloqueado_hasta   DATETIME            NULL,
@@ -49,6 +51,9 @@ CREATE TABLE categorias (
 -- Tabla: noticias
 -- firma_digital: HMAC-SHA256 sobre (titulo|contenido|id_usuario|created_at)
 -- usado para verificar la integridad del contenido (RNF-06).
+-- Si ya tiene la base de datos importada de una versión anterior (sin la
+-- columna video_url), ejecute en su lugar:
+--   ALTER TABLE noticias ADD COLUMN video_url VARCHAR(255) NULL AFTER autor;
 -- -----------------------------------------------------------------------------
 CREATE TABLE noticias (
     id             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -56,6 +61,7 @@ CREATE TABLE noticias (
     contenido      TEXT         NOT NULL,
     id_usuario     INT UNSIGNED NOT NULL COMMENT 'Usuario que creó la noticia',
     autor          VARCHAR(120) NULL COMMENT 'Autor visible (opcional, distinto del usuario del sistema)',
+    video_url      VARCHAR(255) NULL COMMENT 'Enlace embebible de YouTube/Vimeo (opcional)',
     id_categoria   INT UNSIGNED NOT NULL,
     publicado      TINYINT(1)   NOT NULL DEFAULT 0,
     activo         TINYINT(1)   NOT NULL DEFAULT 1 COMMENT 'Baja lógica',
@@ -150,11 +156,12 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- DATOS DE PRUEBA
 -- =============================================================================
 
--- Usuarios: admin / root2514  |  editor / Editor2024
+-- Usuarios: admin@hotmail.com / admin123  |  editor@hotmail.com / editor123  |  supervisor@hotmail.com / super123
 -- Las contraseñas están almacenadas con password_hash() (bcrypt, cost 12).
 INSERT INTO usuarios (id, nombre, email, password, rol, activo, intentos_fallidos, created_at) VALUES
-(1, 'admin', 'admin@sistemanoticias.local', '$2y$12$Ymhnqwo3YnQlCD3XQy1AT.mf9EPlDb0ca1NuYGkvqTv/rew2k7G9i', 'admin', 1, 0, NOW()),
-(2, 'Editor Demo', 'editor@sistemanoticias.local', '$2y$12$BgKw9yBVc3XqkOVIlD5Fhu846YYWA6T5hs/mCWgk6mLTsfhHPa.De', 'editor', 1, 0, NOW());
+(1, 'admin', 'admin@hotmail.com', '$2y$12$2R6Q0ZoLRvHIu1LgP6Be0u.5PNY10PNhb8qeBJDv8p1J0BOw.ooHa', 'admin', 1, 0, NOW()),
+(2, 'Editor Demo', 'editor@hotmail.com', '$2y$12$MIqyu1vJobWc0Qlrzath8OF9Al4IjanbpEkAvuwzd3xQwtl660LQ6', 'editor', 1, 0, NOW()),
+(3, 'Supervisor Demo', 'supervisor@hotmail.com', '$2y$12$TyRuZQlFAiAUHlIyGrjXDezzLUyE6/GojyyDvYj7O3uORbVuAM5Ry', 'supervisor', 1, 0, NOW());
 
 INSERT INTO categorias (id, nombre, descripcion, activo, created_at) VALUES
 (1, 'Deporte',     'Noticias relacionadas con deportes locales e internacionales.', 1, NOW()),
@@ -172,7 +179,21 @@ INSERT INTO noticias (id, titulo, contenido, id_usuario, autor, id_categoria, pu
 (3, 'Nueva ley de innovación tecnológica es aprobada por el congreso', '<p>El congreso aprobó una nueva ley orientada a impulsar la innovación tecnológica y facilitar la creación de empresas emergentes en el país.</p><p>La normativa contempla incentivos fiscales para startups y programas de capacitación en competencias digitales.</p><p>Especialistas del sector consideran que la medida podría atraer inversión extranjera en los próximos años.</p>', 1, NULL, 3, 1, 1, '0341ba26f9fa821aa21d869017f5284a72209aa65a517b9cf0a581980a54c4a8', '2026-07-03 08:00:00', '2026-07-03 08:00:00'),
 (4, 'Congreso debate reforma electoral en sesión extraordinaria', '<p>En una sesión extraordinaria, el congreso inició el debate sobre una propuesta de reforma electoral que busca modernizar el sistema de votación.</p><p>Los legisladores discutieron distintos puntos de vista sobre la implementación de nuevas tecnologías en los procesos electorales.</p><p>Se espera que la discusión continúe durante las próximas semanas antes de someterse a votación final.</p>', 2, 'Redacción Política', 4, 1, 1, 'a4ffb4d14156ba42ae527926f7ef72de2c68511dae1242b7a8f49ead463cd111', '2026-07-04 11:45:00', '2026-07-04 11:45:00'),
 (5, 'Ciudad se prepara para su tradicional feria anual de eventos', '<p>La ciudad ultima los preparativos para la tradicional feria anual de eventos, que este año contará con más de cien expositores y actividades para toda la familia.</p><p>Entre las novedades se incluyen zonas gastronómicas temáticas y un área infantil con juegos interactivos.</p><p>La feria se extenderá durante cinco días en el recinto ferial municipal.</p>', 1, NULL, 2, 1, 1, '863bc47eed8be5dad9b07b9f6716f2b28cfb023025f219d2c6968327e8360190', '2026-07-05 16:20:00', '2026-07-05 16:20:00'),
-(6, 'Equipo local seguirá en la ciudad tras acuerdo por remodelación de estadio', '<p>Tras semanas de incertidumbre, el equipo de fútbol local llegó a un acuerdo con las autoridades municipales para permanecer en la ciudad, condicionado a la remodelación integral de su estadio.</p><p>El proyecto de remodelación iniciará el próximo año y contempla la ampliación de la capacidad y mejoras en accesibilidad.</p><p>La dirigencia del club expresó su satisfacción por el acuerdo alcanzado.</p>', 2, 'Redacción Deportiva', 1, 0, 1, 'ae1feb888aaf1a4ac53a2e9533538c6cf432eb907b2627319c5e08c280584080', '2026-07-06 07:00:00', '2026-07-06 07:00:00');
+(6, 'Equipo local seguirá en la ciudad tras acuerdo por remodelación de estadio', '<p>Tras semanas de incertidumbre, el equipo de fútbol local llegó a un acuerdo con las autoridades municipales para permanecer en la ciudad, condicionado a la remodelación integral de su estadio.</p><p>El proyecto de remodelación iniciará el próximo año y contempla la ampliación de la capacidad y mejoras en accesibilidad.</p><p>La dirigencia del club expresó su satisfacción por el acuerdo alcanzado.</p>', 2, 'Redacción Deportiva', 1, 1, 1, 'ae1feb888aaf1a4ac53a2e9533538c6cf432eb907b2627319c5e08c280584080', '2026-07-06 07:00:00', '2026-07-06 07:00:00');
+
+-- Noticias adicionales para cumplir el mínimo de 3 por categoría (RF: cada
+-- categoría debe tener al menos 3 noticias). Firmas HMAC-SHA256 generadas
+-- con la misma clave SIGNATURE_SECRET_KEY que las noticias 1-6.
+INSERT INTO noticias (id, titulo, contenido, id_usuario, autor, id_categoria, publicado, activo, firma_digital, created_at, updated_at) VALUES
+(7, 'Club juvenil gana torneo regional de baloncesto', '<p>El equipo juvenil de baloncesto de la ciudad se coronó campeón del torneo regional tras vencer en la final a su rival histórico por un ajustado marcador.</p><p>Los entrenadores destacaron el trabajo formativo de las categorías inferiores como base del logro.</p><p>El club anunció que el plantel será reconocido en un acto público la próxima semana.</p>', 2, 'Redacción Deportiva', 1, 1, 1, 'daa6ba9090c9538f8d48272369dee6147426babe29cae8eb1abbbeea30a65734', '2026-07-07 09:00:00', '2026-07-07 09:00:00'),
+(8, 'Feria del libro abre sus puertas con récord de asistencia', '<p>La feria del libro de la ciudad inició su edición número quince con una afluencia de público que superó todas las expectativas de los organizadores.</p><p>Editoriales locales e internacionales presentan sus novedades durante los próximos diez días, con actividades para todas las edades.</p><p>Se espera que la feria cierre con más de cincuenta mil visitantes.</p>', 1, NULL, 2, 1, 1, 'e7f4502bd0bcc2b49cd166237cc091b2c0d0d79a94a64ea4fc2a9969d233b2e4', '2026-07-08 10:00:00', '2026-07-08 10:00:00'),
+(9, 'Concierto benéfico recauda fondos para hospital infantil', '<p>Un concierto benéfico realizado en el parque central logró recaudar fondos destinados a la remodelación del ala pediátrica del hospital municipal.</p><p>Artistas locales participaron de forma gratuita para apoyar la causa.</p><p>Los organizadores agradecieron el respaldo masivo del público asistente.</p>', 2, 'Redacción Cultural', 2, 1, 1, '8e6d98920aecf317a5f2d51c40053ef97933b13bdfc605321d5f0b1f35b5fdf0', '2026-07-09 11:00:00', '2026-07-09 11:00:00'),
+(10, 'Startup local lanza aplicación de movilidad urbana', '<p>Una startup fundada por jóvenes emprendedores presentó una aplicación móvil orientada a mejorar la movilidad urbana mediante rutas inteligentes de transporte.</p><p>El proyecto fue desarrollado con apoyo de un programa de incubación tecnológica de la ciudad.</p><p>Sus creadores esperan expandir el servicio a otras ciudades del país en los próximos meses.</p>', 1, NULL, 3, 1, 1, '97cd98af8d952f5160b47a017e820685a6bf7003b5e9004eef1e6113216ec98b', '2026-07-10 08:30:00', '2026-07-10 08:30:00'),
+(11, 'Universidad presenta laboratorio de inteligencia artificial', '<p>Una universidad local inauguró un nuevo laboratorio dedicado a la investigación en inteligencia artificial y ciencia de datos.</p><p>El espacio contará con equipos de cómputo de alto rendimiento para proyectos estudiantiles y de investigación aplicada.</p><p>Autoridades académicas señalaron que se buscará establecer alianzas con empresas del sector tecnológico.</p>', 2, 'Redacción Tecnológica', 3, 1, 1, 'fd622e4242e20de5bcf1f11bc1e2e6830b1a5350607013bceff1447bd845e503', '2026-07-11 09:30:00', '2026-07-11 09:30:00'),
+(12, 'Alcaldía anuncia plan de modernización vial', '<p>La alcaldía presentó un plan integral de modernización vial que contempla la rehabilitación de las principales avenidas de la ciudad.</p><p>El proyecto incluye la instalación de semáforos inteligentes y ciclovías en zonas de alto tránsito.</p><p>Las obras comenzarán de forma progresiva durante el próximo trimestre.</p>', 1, NULL, 4, 1, 1, '571a4d2d788c93a937e7d0eb918cd72b5e1bc11a0a97292c0bd06a71dd8bb484', '2026-07-12 10:30:00', '2026-07-12 10:30:00'),
+(13, 'Comisión legislativa revisa presupuesto general del estado', '<p>La comisión de finanzas del congreso inició la revisión detallada del presupuesto general del estado para el próximo período fiscal.</p><p>Los legisladores analizan ajustes en distintas partidas antes de someter el documento a votación en el pleno.</p><p>Se espera que el debate se extienda durante varias semanas.</p>', 2, 'Redacción Política', 4, 1, 1, '6b85dc4ef02c376e338f0ba3ce9be4ebb6f09bf1ae8db81b2356d436d554db6e', '2026-07-13 11:30:00', '2026-07-13 11:30:00'),
+(14, 'Museo nacional inaugura exposición de arte contemporáneo', '<p>El museo nacional abrió al público una nueva exposición dedicada a artistas contemporáneos de la región.</p><p>La muestra reúne pinturas, esculturas e instalaciones de más de veinte creadores locales.</p><p>La exposición permanecerá abierta durante los próximos tres meses con entrada gratuita.</p>', 1, NULL, 5, 1, 1, 'c91892cecf5a3e4af38b8c64de478f45ced549c6a530b3c02a71e40feecafe66', '2026-07-14 12:00:00', '2026-07-14 12:00:00'),
+(15, 'Orquesta sinfónica ofrece concierto gratuito en la plaza central', '<p>La orquesta sinfónica nacional ofreció un concierto gratuito en la plaza central de la ciudad ante cientos de asistentes.</p><p>El repertorio incluyó piezas clásicas y composiciones de autores locales.</p><p>Las autoridades culturales anunciaron que este tipo de eventos se realizará de forma trimestral.</p>', 2, 'Redacción Cultural', 5, 1, 1, 'a6e42dd1845431fa189ac06d3765995e10e90d72d335e786d5471c008470e05d', '2026-07-15 13:00:00', '2026-07-15 13:00:00');
 
 -- Imágenes de demostración (3 por noticia: portada + 2 adicionales).
 -- Los archivos físicos correspondientes ya se incluyen en /public/uploads/.
@@ -196,6 +217,37 @@ INSERT INTO noticia_imagenes (id_noticia, ruta_imagen, ruta_thumbnail, orden, cr
 (6, 'news/seed_news6_img2.jpg', 'thumbnails/seed_news6_img2.jpg', 1, NOW()),
 (6, 'news/seed_news6_img3.jpg', 'thumbnails/seed_news6_img3.jpg', 2, NOW());
 
+-- Imágenes de las noticias 7-15, reutilizando los mismos archivos físicos
+-- de las noticias 1-6 (no hay restricción de unicidad en ruta_imagen).
+INSERT INTO noticia_imagenes (id_noticia, ruta_imagen, ruta_thumbnail, orden, created_at) VALUES
+(7, 'news/seed_news1_img1.jpg', 'thumbnails/seed_news1_img1.jpg', 0, NOW()),
+(7, 'news/seed_news1_img2.jpg', 'thumbnails/seed_news1_img2.jpg', 1, NOW()),
+(7, 'news/seed_news1_img3.jpg', 'thumbnails/seed_news1_img3.jpg', 2, NOW()),
+(8, 'news/seed_news2_img1.jpg', 'thumbnails/seed_news2_img1.jpg', 0, NOW()),
+(8, 'news/seed_news2_img2.jpg', 'thumbnails/seed_news2_img2.jpg', 1, NOW()),
+(8, 'news/seed_news2_img3.jpg', 'thumbnails/seed_news2_img3.jpg', 2, NOW()),
+(9, 'news/seed_news3_img1.jpg', 'thumbnails/seed_news3_img1.jpg', 0, NOW()),
+(9, 'news/seed_news3_img2.jpg', 'thumbnails/seed_news3_img2.jpg', 1, NOW()),
+(9, 'news/seed_news3_img3.jpg', 'thumbnails/seed_news3_img3.jpg', 2, NOW()),
+(10, 'news/seed_news4_img1.jpg', 'thumbnails/seed_news4_img1.jpg', 0, NOW()),
+(10, 'news/seed_news4_img2.jpg', 'thumbnails/seed_news4_img2.jpg', 1, NOW()),
+(10, 'news/seed_news4_img3.jpg', 'thumbnails/seed_news4_img3.jpg', 2, NOW()),
+(11, 'news/seed_news5_img1.jpg', 'thumbnails/seed_news5_img1.jpg', 0, NOW()),
+(11, 'news/seed_news5_img2.jpg', 'thumbnails/seed_news5_img2.jpg', 1, NOW()),
+(11, 'news/seed_news5_img3.jpg', 'thumbnails/seed_news5_img3.jpg', 2, NOW()),
+(12, 'news/seed_news6_img1.jpg', 'thumbnails/seed_news6_img1.jpg', 0, NOW()),
+(12, 'news/seed_news6_img2.jpg', 'thumbnails/seed_news6_img2.jpg', 1, NOW()),
+(12, 'news/seed_news6_img3.jpg', 'thumbnails/seed_news6_img3.jpg', 2, NOW()),
+(13, 'news/seed_news1_img1.jpg', 'thumbnails/seed_news1_img1.jpg', 0, NOW()),
+(13, 'news/seed_news1_img2.jpg', 'thumbnails/seed_news1_img2.jpg', 1, NOW()),
+(13, 'news/seed_news1_img3.jpg', 'thumbnails/seed_news1_img3.jpg', 2, NOW()),
+(14, 'news/seed_news2_img1.jpg', 'thumbnails/seed_news2_img1.jpg', 0, NOW()),
+(14, 'news/seed_news2_img2.jpg', 'thumbnails/seed_news2_img2.jpg', 1, NOW()),
+(14, 'news/seed_news2_img3.jpg', 'thumbnails/seed_news2_img3.jpg', 2, NOW()),
+(15, 'news/seed_news3_img1.jpg', 'thumbnails/seed_news3_img1.jpg', 0, NOW()),
+(15, 'news/seed_news3_img2.jpg', 'thumbnails/seed_news3_img2.jpg', 1, NOW()),
+(15, 'news/seed_news3_img3.jpg', 'thumbnails/seed_news3_img3.jpg', 2, NOW());
+
 INSERT INTO comentarios (id_noticia, nombre_usuario, email, comentario, estado, respuesta, id_usuario_admin, created_at) VALUES
 (1, 'Carlos Pérez', 'carlos.perez@example.com', 'Excelente noticia, felicitaciones al equipo por el esfuerzo mostrado.', 'aprobado', 'Gracias por su comentario, Carlos.', 1, '2026-07-01 10:00:00'),
 (1, 'María Gómez', 'maria.gomez@example.com', 'Estaré pendiente de los próximos partidos, gran clasificación.', 'aprobado', NULL, NULL, '2026-07-01 11:30:00'),
@@ -212,9 +264,9 @@ INSERT INTO reacciones (id_noticia, tipo, ip_address, created_at) VALUES
 (3, 'like', '190.10.20.6', '2026-07-03 11:00:00');
 
 INSERT INTO login_logs (usuario, ip_address, exito, user_agent, fecha_hora) VALUES
-('admin', '127.0.0.1', 1, 'Mozilla/5.0 (Demo Seed)', '2026-07-05 08:00:00'),
-('admin', '127.0.0.1', 0, 'Mozilla/5.0 (Demo Seed)', '2026-07-05 20:15:00'),
-('editor@sistemanoticias.local', '127.0.0.1', 1, 'Mozilla/5.0 (Demo Seed)', '2026-07-06 08:30:00');
+('admin@hotmail.com', '127.0.0.1', 1, 'Mozilla/5.0 (Demo Seed)', '2026-07-05 08:00:00'),
+('admin@hotmail.com', '127.0.0.1', 0, 'Mozilla/5.0 (Demo Seed)', '2026-07-05 20:15:00'),
+('editor@hotmail.com', '127.0.0.1', 1, 'Mozilla/5.0 (Demo Seed)', '2026-07-06 08:30:00');
 
 INSERT INTO visitas (session_id, ip_address, created_at) VALUES
 ('seed_session_1', '190.10.20.1', '2026-07-01 10:00:00'),

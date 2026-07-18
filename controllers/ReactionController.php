@@ -10,10 +10,15 @@ class ReactionController extends BaseController
         $this->reactionModel = new ReactionModel();
     }
 
-    public function like(int $newsId): array
+    public function react(int $newsId, string $tipo): array
     {
         $this->requireCsrf();
-        $added = $this->reactionModel->addLike($newsId, clientIp());
+
+        if (!array_key_exists($tipo, REACTION_TYPES)) {
+            $tipo = 'like';
+        }
+
+        $added = $this->reactionModel->addReaction($newsId, clientIp(), $tipo);
 
         return [
             'added' => $added,
@@ -24,6 +29,11 @@ class ReactionController extends BaseController
     public function countByNews(int $newsId): int
     {
         return $this->reactionModel->countByNews($newsId);
+    }
+
+    public function countByNewsGroupedByType(int $newsId): array
+    {
+        return $this->reactionModel->countByNewsGroupedByType($newsId);
     }
 
     public function alreadyReacted(int $newsId): bool

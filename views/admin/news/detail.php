@@ -13,6 +13,11 @@ if ($news === null) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (($_POST['action'] ?? '') === 'delete_news') {
+        $newsController->deleteNews($id);
+        redirectTo(BASE_URL . '/views/admin/news/list.php');
+    }
+
     $commentId = (int) ($_POST['comment_id'] ?? 0);
     switch ($_POST['action'] ?? '') {
         case 'approve':
@@ -34,6 +39,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $comments = $commentController->byNews($id, null); // todos los estados para gestión
 $reactionsTotal = $reactionController->countByNews($id);
 $integrityOk = $newsController->verifyIntegrity($news);
+$canModifyNews = $newsController->canModify($news);
+$canModerate = in_array($_SESSION['user_role'] ?? '', ['admin', 'supervisor'], true);
+$canReply = ($_SESSION['user_role'] ?? '') === 'admin';
 
 $pageTitle = 'Detalle de noticia';
 $activeMenu = 'news';
@@ -43,7 +51,18 @@ require ROOT_PATH . '/views/partials/admin_menu.php';
 <div class="card">
     <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:0.8rem;align-items:center">
         <h1 style="margin:0"><?= e($news['titulo']) ?></h1>
-        <a href="<?= BASE_URL ?>/views/admin/news/form.php?id=<?= $id ?>" class="btn btn-small">Editar</a>
+        <div class="actions">
+            <?php if ($canModifyNews): ?>
+                <a href="<?= BASE_URL ?>/views/admin/news/form.php?id=<?= $id ?>" class="btn btn-small">Editar</a>
+            <?php endif; ?>
+            <?php if ($newsController->isPrivileged()): ?>
+                <form method="post" action="<?= BASE_URL ?>/views/admin/news/detail.php?id=<?= $id ?>" data-confirm="¿Eliminar esta noticia de forma PERMANENTE? Se borrarán también sus imágenes, comentarios y reacciones. Esta acción no se puede deshacer.">
+                    <?= Security::csrfField() ?>
+                    <input type="hidden" name="action" value="delete_news">
+                    <button type="submit" class="btn btn-small btn-danger">Eliminar</button>
+                </form>
+            <?php endif; ?>
+        </div>
     </div>
 
     <p class="news-meta" style="color:#6b7280">
@@ -66,6 +85,13 @@ require ROOT_PATH . '/views/partials/admin_menu.php';
             <img src="<?= UPLOAD_NEWS_URL . e(basename($img['ruta_imagen'])) ?>" alt="">
         <?php endforeach; ?>
     </div>
+
+    <?php $embedUrl = embedVideoUrl($news['video_url'] ?? null); ?>
+    <?php if ($embedUrl !== null): ?>
+        <div class="news-video">
+            <iframe src="<?= e($embedUrl) ?>" title="<?= e($news['titulo']) ?>" allowfullscreen></iframe>
+        </div>
+    <?php endif; ?>
 
     <div class="news-content"><?= $news['contenido'] ?></div>
 </div>
@@ -93,6 +119,7 @@ require ROOT_PATH . '/views/partials/admin_menu.php';
                 <div class="comment-reply"><strong>Respuesta del administrador:</strong> <?= e($comment['respuesta']) ?></div>
             <?php endif; ?>
 
+            <?php if ($canModerate): ?>
             <div class="actions" style="margin-top:0.5rem">
                 <?php if ($comment['estado'] !== 'aprobado'): ?>
                     <form method="post" action="<?= BASE_URL ?>/views/admin/news/detail.php?id=<?= $id ?>">
@@ -117,7 +144,9 @@ require ROOT_PATH . '/views/partials/admin_menu.php';
                     <button type="submit" class="btn btn-small btn-danger">Eliminar</button>
                 </form>
             </div>
+            <?php endif; ?>
 
+            <?php if ($canReply): ?>
             <form method="post" action="<?= BASE_URL ?>/views/admin/news/detail.php?id=<?= $id ?>" style="margin-top:0.6rem;display:flex;gap:0.5rem">
                 <?= Security::csrfField() ?>
                 <input type="hidden" name="action" value="reply">
@@ -125,6 +154,7 @@ require ROOT_PATH . '/views/partials/admin_menu.php';
                 <input type="text" name="respuesta" placeholder="Responder a este comentario..." style="flex:1">
                 <button type="submit" class="btn btn-small">Responder</button>
             </form>
+            <?php endif; ?>
         </div>
     <?php endforeach; ?>
 </div>

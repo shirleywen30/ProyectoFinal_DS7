@@ -53,22 +53,52 @@ class NewsController extends BaseController
         return $this->categoryModel->allActive();
     }
 
+    /** Rol con permisos amplios sobre noticias (crear/modificar/publicar cualquiera). */
+    public function isPrivileged(): bool
+    {
+        return in_array($_SESSION['user_role'] ?? '', ['admin', 'supervisor'], true);
+    }
+
+    /** Un privilegiado puede modificar cualquier noticia; un editor, solo las suyas. */
+    public function canModify(array $news): bool
+    {
+        return $this->isPrivileged() || (int) $news['id_usuario'] === (int) ($_SESSION['user_id'] ?? 0);
+    }
+
     /** Devuelve arreglo de errores; vacío si la operación fue exitosa. */
     public function save(?int $id): array
     {
         $this->requireCsrf();
 
+        $original = null;
+        if ($id !== null) {
+            $original = $this->newsModel->find($id);
+            if ($original === null || !$this->canModify($original)) {
+                http_response_code(403);
+                die('Acceso denegado: no cuenta con los permisos necesarios para modificar esta noticia.');
+            }
+        }
+
         $titulo = Validator::sanitizeString($this->input('titulo'));
         $contenido = Validator::sanitizeRichText($this->input('contenido'));
         $autor = Validator::sanitizeString($this->input('autor'));
+        $videoUrl = Validator::sanitizeString($this->input('video_url'));
         $idCategoria = Validator::sanitizeInt($this->input('id_categoria'));
-        $publicado = $this->input('publicado', '0') === '1' ? 1 : 0;
+
+        $publicadoInput = $this->input('publicado', '0') === '1' ? 1 : 0;
+        // Un editor no puede fijar el estado de publicación: en creación queda
+        // sin publicar y en edición se conserva el valor ya almacenado.
+        $publicado = $this->isPrivileged() ? $publicadoInput : ($original !== null ? (int) $original['publicado'] : 0);
 
         $validator = new Validator();
         $validator->isRequired($titulo, 'titulo', 'título')
             ->isLength($titulo, 'titulo', 'título', 5, 200)
             ->isRequired($contenido, 'contenido', 'contenido')
             ->isRequired($idCategoria, 'id_categoria', 'categoría');
+
+        if ($videoUrl !== '' && filter_var($videoUrl, FILTER_VALIDATE_URL) === false) {
+            $validator->addError('video_url', 'El enlace del video no es una URL válida.');
+        }
 
         $uploader = new ImageUploader();
         $incomingFiles = $_FILES['imagenes'] ?? ['name' => []];
@@ -92,6 +122,7 @@ class NewsController extends BaseController
             'titulo' => $titulo,
             'contenido' => $contenido,
             'autor' => $autor !== '' ? $autor : null,
+            'video_url' => $videoUrl !== '' ? $videoUrl : null,
             'id_categoria' => $idCategoria,
             'publicado' => $publicado,
         ];
@@ -108,7 +139,6 @@ class NewsController extends BaseController
             $newsId = $this->newsModel->create($data);
         } else {
             $newsId = $id;
-            $original = $this->newsModel->find($id);
 
             $data['firma_digital'] = Security::generateSignature([
                 $titulo, $contenido, $original['id_usuario'], $original['created_at'],
@@ -142,7 +172,7 @@ class NewsController extends BaseController
     {
         $this->requireCsrf();
         $news = $this->newsModel->find($id);
-        if ($news !== null) {
+        if ($news !== null && $this->canModify($news)) {
             $this->newsModel->toggleActive($id, !((bool) $news['activo']));
         }
     }
@@ -150,10 +180,49 @@ class NewsController extends BaseController
     public function togglePublished(int $id): void
     {
         $this->requireCsrf();
+        if (!$this->isPrivileged()) {
+            http_response_code(403);
+            die('Acceso denegado: solo un supervisor o administrador puede publicar noticias.');
+        }
         $news = $this->newsModel->find($id);
         if ($news !== null) {
             $this->newsModel->togglePublished($id, !((bool) $news['publicado']));
         }
+    }
+
+    /**
+     * Elimina una noticia de forma permanente: borra sus imágenes físicas
+     * del disco y la fila de la noticia (comentarios, reacciones e imágenes
+     * en base de datos se eliminan en cascada por las llaves foráneas).
+     * Distinto de toggleActive() (baja lógica, reversible).
+     */
+    public function deleteNews(int $id): void
+    {
+        $this->requireCsrf();
+
+        if (!$this->isPrivileged()) {
+            http_response_code(403);
+            die('Acceso denegado: solo un supervisor o administrador puede eliminar noticias.');
+        }
+
+        $news = $this->newsModel->find($id);
+        if ($news === null) {
+            return;
+        }
+
+        foreach ($this->imageModel->byNews($id) as $img) {
+            $imagePath = UPLOAD_NEWS_PATH . basename($img['ruta_imagen']);
+            $thumbPath = UPLOAD_THUMB_PATH . basename($img['ruta_thumbnail']);
+
+            if (is_file($imagePath)) {
+                @unlink($imagePath);
+            }
+            if (is_file($thumbPath)) {
+                @unlink($thumbPath);
+            }
+        }
+
+        $this->newsModel->delete($id);
     }
 
     /**

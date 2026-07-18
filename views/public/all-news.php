@@ -28,14 +28,13 @@ require ROOT_PATH . '/views/partials/public_header.php';
     </div>
     <div class="field">
         <label>Categoría</label>
-        <select name="categoria">
+        <select name="categoria" onchange="this.form.submit()">
             <option value="">Todas</option>
             <?php foreach ($menuCategories as $cat): ?>
                 <option value="<?= (int) $cat['id'] ?>" <?= (($_GET['categoria'] ?? '') == $cat['id']) ? 'selected' : '' ?>><?= e($cat['nombre']) ?></option>
             <?php endforeach; ?>
         </select>
     </div>
-    <button type="submit" class="btn">Buscar</button>
 </form>
 
 <?php if (empty($result['items'])): ?>

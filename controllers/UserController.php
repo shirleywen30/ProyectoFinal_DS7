@@ -55,7 +55,7 @@ class UserController extends BaseController
             ->isLength($nombre, 'nombre', 'nombre', 3, 100)
             ->isRequired($email, 'email', 'correo electrónico')
             ->isEmail($email, 'email', 'correo electrónico')
-            ->isInArray($rol, ['admin', 'editor'], 'rol', 'rol');
+            ->isInArray($rol, ['admin', 'editor', 'supervisor'], 'rol', 'rol');
 
         // La contraseña solo es obligatoria al crear; en edición es opcional (se conserva si se deja vacía).
         if ($id === null || $password !== '') {

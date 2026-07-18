@@ -57,6 +57,7 @@ require ROOT_PATH . '/views/partials/admin_menu.php';
                 <?php $rolSel = $_POST['rol'] ?? $user['rol'] ?? 'editor'; ?>
                 <select id="rol" name="rol">
                     <option value="admin" <?= $rolSel === 'admin' ? 'selected' : '' ?>>Administrador</option>
+                    <option value="supervisor" <?= $rolSel === 'supervisor' ? 'selected' : '' ?>>Supervisor</option>
                     <option value="editor" <?= $rolSel === 'editor' ? 'selected' : '' ?>>Editor</option>
                 </select>
             </div>

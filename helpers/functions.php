@@ -64,9 +64,15 @@ if (!function_exists('old')) {
 }
 
 if (!function_exists('asset')) {
+    /** Genera la URL de un archivo estático con "cache busting" (?v=fecha de modificación),
+     * para que el navegador siempre cargue la versión actual de CSS/JS tras cada cambio. */
     function asset(string $path): string
     {
-        return BASE_URL . '/public/' . ltrim($path, '/');
+        $relative = ltrim($path, '/');
+        $fullPath = ROOT_PATH . '/public/' . $relative;
+        $version = is_file($fullPath) ? filemtime($fullPath) : time();
+
+        return BASE_URL . '/public/' . $relative . '?v=' . $version;
     }
 }
 
@@ -89,6 +95,26 @@ if (!function_exists('buildPaginationLinks')) {
     function buildPaginationLinks(int $currentPage, int $totalPages): array
     {
         return range(max(1, $currentPage - 2), min($totalPages, $currentPage + 2));
+    }
+}
+
+if (!function_exists('embedVideoUrl')) {
+    /** Convierte un enlace de YouTube/Vimeo en su URL de embed; null si no se reconoce. */
+    function embedVideoUrl(?string $url): ?string
+    {
+        if (empty($url)) {
+            return null;
+        }
+
+        if (preg_match('/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/', $url, $m)) {
+            return 'https://www.youtube.com/embed/' . $m[1];
+        }
+
+        if (preg_match('/vimeo\.com\/(?:video\/)?(\d+)/', $url, $m)) {
+            return 'https://player.vimeo.com/video/' . $m[1];
+        }
+
+        return null;
     }
 }
 

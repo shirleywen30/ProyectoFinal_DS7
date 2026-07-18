@@ -28,7 +28,7 @@ class UserModel extends BaseModel
     /** Búsqueda por nombre o email para el listado administrativo. */
     public function search(string $term, int $limit, int $offset): array
     {
-        $sql = 'SELECT * FROM usuarios WHERE nombre LIKE :term1 OR email LIKE :term2 ORDER BY id DESC LIMIT :limit OFFSET :offset';
+        $sql = 'SELECT * FROM usuarios WHERE LOWER(nombre) LIKE LOWER(:term1) OR LOWER(email) LIKE LOWER(:term2) ORDER BY id DESC LIMIT :limit OFFSET :offset';
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue('term1', "%{$term}%");
         $stmt->bindValue('term2', "%{$term}%");
@@ -40,7 +40,7 @@ class UserModel extends BaseModel
 
     public function countSearch(string $term): int
     {
-        $stmt = $this->db->prepare('SELECT COUNT(*) AS total FROM usuarios WHERE nombre LIKE :term1 OR email LIKE :term2');
+        $stmt = $this->db->prepare('SELECT COUNT(*) AS total FROM usuarios WHERE LOWER(nombre) LIKE LOWER(:term1) OR LOWER(email) LIKE LOWER(:term2)');
         $stmt->execute(['term1' => "%{$term}%", 'term2' => "%{$term}%"]);
         return (int) $stmt->fetch()['total'];
     }

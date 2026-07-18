@@ -8,6 +8,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $controller->toggleActive((int) $_POST['id']);
     } elseif (($_POST['action'] ?? '') === 'toggle_published') {
         $controller->togglePublished((int) $_POST['id']);
+    } elseif (($_POST['action'] ?? '') === 'delete_news') {
+        $controller->deleteNews((int) $_POST['id']);
     }
     redirectTo(BASE_URL . '/views/admin/news/list.php?' . http_build_query($_GET));
 }
@@ -35,7 +37,7 @@ require ROOT_PATH . '/views/partials/admin_menu.php';
         <a href="<?= BASE_URL ?>/views/admin/news/form.php" class="btn">+ Nueva noticia</a>
     </div>
 
-    <form method="get" action="<?= BASE_URL ?>/views/admin/news/list.php" class="filters-bar" style="margin-top:1rem">
+    <form method="get" action="<?= BASE_URL ?>/views/admin/news/list.php" class="filters-bar">
         <div class="field">
             <label>Buscar (título/autor)</label>
             <input type="search" name="buscar" value="<?= e($_GET['buscar'] ?? '') ?>">
@@ -62,10 +64,10 @@ require ROOT_PATH . '/views/partials/admin_menu.php';
             </select>
         </div>
         <button type="submit" class="btn btn-secondary">Filtrar</button>
-        <a href="<?= BASE_URL ?>/views/admin/news/list.php" class="btn btn-small" style="align-self:center">Limpiar</a>
+        <a href="<?= BASE_URL ?>/views/admin/news/list.php" class="btn btn-secondary">Limpiar</a>
     </form>
 
-    <div class="table-responsive" style="margin-top:1rem">
+    <div class="table-responsive">
         <table>
             <thead>
                 <tr><th>Miniatura</th><th>Título</th><th>Extracto</th><th>Categoría</th><th>Autor</th><th>Estado</th><th>Acciones</th></tr>
@@ -96,21 +98,36 @@ require ROOT_PATH . '/views/partials/admin_menu.php';
                             <?php endif; ?>
                         </td>
                         <td data-label="Acciones">
+                            <?php $canModifyRow = $controller->canModify($news); ?>
                             <div class="actions">
                                 <a class="btn btn-small" href="<?= BASE_URL ?>/views/admin/news/detail.php?id=<?= (int) $news['id'] ?>">Ver</a>
-                                <a class="btn btn-small" href="<?= BASE_URL ?>/views/admin/news/form.php?id=<?= (int) $news['id'] ?>">Editar</a>
-                                <form method="post" action="<?= BASE_URL ?>/views/admin/news/list.php?<?= http_build_query($_GET) ?>">
-                                    <?= Security::csrfField() ?>
-                                    <input type="hidden" name="action" value="toggle_published">
-                                    <input type="hidden" name="id" value="<?= (int) $news['id'] ?>">
-                                    <button type="submit" class="btn btn-small btn-secondary"><?= $news['publicado'] ? 'Despublicar' : 'Publicar' ?></button>
-                                </form>
-                                <form method="post" action="<?= BASE_URL ?>/views/admin/news/list.php?<?= http_build_query($_GET) ?>" data-confirm="¿Cambiar el estado de esta noticia?">
-                                    <?= Security::csrfField() ?>
-                                    <input type="hidden" name="action" value="toggle_active">
-                                    <input type="hidden" name="id" value="<?= (int) $news['id'] ?>">
-                                    <button type="submit" class="btn btn-small <?= $news['activo'] ? 'btn-danger' : 'btn-success' ?>"><?= $news['activo'] ? 'Dar de baja' : 'Reactivar' ?></button>
-                                </form>
+                                <?php if ($canModifyRow): ?>
+                                    <a class="btn btn-small" href="<?= BASE_URL ?>/views/admin/news/form.php?id=<?= (int) $news['id'] ?>">Editar</a>
+                                <?php endif; ?>
+                                <?php if ($controller->isPrivileged()): ?>
+                                    <form method="post" action="<?= BASE_URL ?>/views/admin/news/list.php?<?= http_build_query($_GET) ?>">
+                                        <?= Security::csrfField() ?>
+                                        <input type="hidden" name="action" value="toggle_published">
+                                        <input type="hidden" name="id" value="<?= (int) $news['id'] ?>">
+                                        <button type="submit" class="btn btn-small btn-secondary"><?= $news['publicado'] ? 'Despublicar' : 'Publicar' ?></button>
+                                    </form>
+                                <?php endif; ?>
+                                <?php if ($canModifyRow): ?>
+                                    <form method="post" action="<?= BASE_URL ?>/views/admin/news/list.php?<?= http_build_query($_GET) ?>" data-confirm="¿Cambiar el estado de esta noticia?">
+                                        <?= Security::csrfField() ?>
+                                        <input type="hidden" name="action" value="toggle_active">
+                                        <input type="hidden" name="id" value="<?= (int) $news['id'] ?>">
+                                        <button type="submit" class="btn btn-small <?= $news['activo'] ? 'btn-danger' : 'btn-success' ?>"><?= $news['activo'] ? 'Dar de baja' : 'Reactivar' ?></button>
+                                    </form>
+                                <?php endif; ?>
+                                <?php if ($controller->isPrivileged()): ?>
+                                    <form method="post" action="<?= BASE_URL ?>/views/admin/news/list.php?<?= http_build_query($_GET) ?>" data-confirm="¿Eliminar esta noticia de forma PERMANENTE? Se borrarán también sus imágenes, comentarios y reacciones. Esta acción no se puede deshacer.">
+                                        <?= Security::csrfField() ?>
+                                        <input type="hidden" name="action" value="delete_news">
+                                        <input type="hidden" name="id" value="<?= (int) $news['id'] ?>">
+                                        <button type="submit" class="btn btn-small btn-danger">Eliminar</button>
+                                    </form>
+                                <?php endif; ?>
                             </div>
                         </td>
                     </tr>

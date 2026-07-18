@@ -7,7 +7,7 @@ class CategoryController extends BaseController
 
     public function __construct()
     {
-        $this->requireAuth();
+        $this->requireRole('admin', 'supervisor');
         $this->categoryModel = new CategoryModel();
     }
 

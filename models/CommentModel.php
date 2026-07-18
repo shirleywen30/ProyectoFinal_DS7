@@ -71,6 +71,11 @@ class CommentModel extends BaseModel
             $params['id_noticia'] = $filters['id_noticia'];
         }
 
+        if (!empty($filters['desde'])) {
+            $clauses[] = 'c.created_at >= :desde';
+            $params['desde'] = $filters['desde'];
+        }
+
         $where = $clauses ? ('WHERE ' . implode(' AND ', $clauses)) : '';
         return [$where, $params];
     }

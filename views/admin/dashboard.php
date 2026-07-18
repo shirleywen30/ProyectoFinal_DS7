@@ -12,12 +12,26 @@ $commentModel = new CommentModel();
 $visitModel = new VisitModel();
 $logModel = new LogModel();
 
+$periodos = [
+    '7' => 'Últimos 7 días',
+    '30' => 'Último mes',
+    '90' => 'Últimos 3 meses',
+    '180' => 'Últimos 6 meses',
+    '365' => 'Último año',
+    'todo' => 'Todo el tiempo',
+];
+$periodo = $_GET['periodo'] ?? '30';
+if (!array_key_exists($periodo, $periodos)) {
+    $periodo = '30';
+}
+$from = $periodo === 'todo' ? null : date('Y-m-d H:i:s', strtotime("-{$periodo} days"));
+
 $stats = [
-    'noticias' => $newsModel->count(),
-    'usuarios' => $userModel->count(),
+    'noticias' => $newsModel->countSince('created_at', $from),
+    'usuarios' => $userModel->countSince('created_at', $from),
     'categorias' => $categoryModel->count(),
-    'comentarios_pendientes' => $commentModel->countFilter(['estado' => 'pendiente']),
-    'visitas' => $visitModel->totalVisits(),
+    'comentarios_pendientes' => $commentModel->countFilter(['estado' => 'pendiente', 'desde' => $from]),
+    'visitas' => $visitModel->countSince('created_at', $from),
 ];
 
 $recentLogs = $logModel->recent(10);
@@ -28,6 +42,18 @@ require ROOT_PATH . '/views/partials/admin_header.php';
 require ROOT_PATH . '/views/partials/admin_menu.php';
 ?>
 <h1>Panel de administración</h1>
+
+<form method="get" action="<?= BASE_URL ?>/views/admin/dashboard.php" class="filters-bar">
+    <div class="field">
+        <label for="periodo">Período de las estadísticas</label>
+        <select id="periodo" name="periodo" onchange="this.form.submit()">
+            <?php foreach ($periodos as $value => $label): ?>
+                <option value="<?= e((string) $value) ?>" <?= $periodo === (string) $value ? 'selected' : '' ?>><?= e($label) ?></option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+    <noscript><button type="submit" class="btn btn-secondary">Filtrar</button></noscript>
+</form>
 
 <div class="dashboard-stats">
     <div class="stat-card">

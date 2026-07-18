@@ -35,15 +35,20 @@ class Security
         return '<input type="hidden" name="csrf_token" value="' . self::generateCsrfToken() . '">';
     }
 
-    /** Hash seguro de contraseñas usando bcrypt (OWASP: almacenamiento de credenciales). */
+    /**
+     * Hash seguro de contraseñas (OWASP: almacenamiento de credenciales) y
+     * firma digital de integridad (RNF-06) delegadas en implementaciones
+     * concretas de HashServiceInterface (contrato unificado de servicios
+     * criptográficos - SOLID: Inversión de Dependencias).
+     */
     public static function hashPassword(string $plainPassword): string
     {
-        return password_hash($plainPassword, PASSWORD_BCRYPT, ['cost' => 12]);
+        return (new PasswordHashService())->hash($plainPassword);
     }
 
     public static function verifyPassword(string $plainPassword, string $hash): bool
     {
-        return password_verify($plainPassword, $hash);
+        return (new PasswordHashService())->verify($plainPassword, $hash);
     }
 
     /**
@@ -52,14 +57,12 @@ class Security
      */
     public static function generateSignature(array $fields): string
     {
-        $payload = implode('|', $fields);
-        return hash_hmac('sha256', $payload, SIGNATURE_SECRET_KEY);
+        return (new SignatureHashService())->hash(implode('|', $fields));
     }
 
     public static function verifySignature(array $fields, string $signature): bool
     {
-        $expected = self::generateSignature($fields);
-        return hash_equals($expected, $signature);
+        return (new SignatureHashService())->verify(implode('|', $fields), $signature);
     }
 
     /** Genera un nombre de archivo aleatorio y seguro conservando la extensión. */
