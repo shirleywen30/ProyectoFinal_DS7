@@ -62,4 +62,38 @@ document.addEventListener('DOMContentLoaded', function () {
             renderPreview();
         });
     }
+
+    // Eliminación de imágenes ya guardadas de la noticia (efectiva al guardar el formulario).
+    var currentImages = document.getElementById('current-images');
+    var deleteInputsContainer = document.getElementById('eliminar-imagenes-inputs');
+
+    if (currentImages && deleteInputsContainer) {
+        currentImages.addEventListener('click', function (e) {
+            var btn = e.target.closest('[data-remove-existing-image]');
+            if (!btn) {
+                return;
+            }
+
+            var item = btn.closest('.image-preview-item');
+            var imageId = item.getAttribute('data-image-id');
+            var wasPortada = item.querySelector('input[name="imagen_portada"]:checked') !== null;
+
+            var hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'eliminar_imagenes[]';
+            hiddenInput.value = imageId;
+            deleteInputsContainer.appendChild(hiddenInput);
+
+            item.remove();
+
+            // Si se eliminó la imagen marcada como miniatura, se elige la
+            // siguiente disponible para no dejar el formulario sin selección.
+            if (wasPortada) {
+                var nextRadio = currentImages.querySelector('input[name="imagen_portada"]');
+                if (nextRadio) {
+                    nextRadio.checked = true;
+                }
+            }
+        });
+    }
 });

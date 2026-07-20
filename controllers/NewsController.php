@@ -104,14 +104,33 @@ class NewsController extends BaseController
         $incomingFiles = $_FILES['imagenes'] ?? ['name' => []];
         $newFilesCount = count(array_filter($incomingFiles['name'] ?? [], fn($n) => $n !== ''));
 
-        if ($id === null) {
-            $existingCount = 0;
-        } else {
-            $existingCount = count($this->imageModel->byNews($id));
-        }
+        $existingImages = $id === null ? [] : $this->imageModel->byNews($id);
+        $existingCount = count($existingImages);
 
-        if (($existingCount + $newFilesCount) < MIN_NEWS_IMAGES) {
-            $validator->addError('imagenes', 'La noticia debe tener al menos ' . MIN_NEWS_IMAGES . ' imágenes (actualmente tiene ' . $existingCount . ').');
+        // Imágenes existentes marcadas para eliminar; se filtran contra las
+        // reales de esta noticia para evitar borrar imágenes de terceros.
+        $imagesToDelete = [];
+        if ($id !== null) {
+            $requestedDeleteIds = array_map('intval', (array) $this->input('eliminar_imagenes', []));
+            foreach ($existingImages as $img) {
+                if (in_array((int) $img['id'], $requestedDeleteIds, true)) {
+                    $imagesToDelete[] = $img;
+                }
+            }
+        }
+        $deleteIds = array_map(fn($img) => (int) $img['id'], $imagesToDelete);
+        $remainingImages = array_values(array_filter(
+            $existingImages,
+            fn($img) => !in_array((int) $img['id'], $deleteIds, true)
+        ));
+        $remainingCount = count($remainingImages);
+
+        // Imagen existente elegida como miniatura principal (solo válida si
+        // sigue entre las que no se eliminaron en este mismo guardado).
+        $portadaId = $id !== null ? (int) $this->input('imagen_portada', 0) : 0;
+
+        if (($remainingCount + $newFilesCount) < MIN_NEWS_IMAGES) {
+            $validator->addError('imagenes', 'La noticia debe tener al menos ' . MIN_NEWS_IMAGES . ' imágenes (quedarían ' . $remainingCount . ').');
         }
 
         if ($validator->fails()) {
@@ -148,6 +167,38 @@ class NewsController extends BaseController
             $this->newsModel->update($id, $data);
         }
 
+        foreach ($imagesToDelete as $img) {
+            $imagePath = UPLOAD_NEWS_PATH . basename($img['ruta_imagen']);
+            $thumbPath = UPLOAD_THUMB_PATH . basename($img['ruta_thumbnail']);
+
+            if (is_file($imagePath)) {
+                @unlink($imagePath);
+            }
+            if (is_file($thumbPath)) {
+                @unlink($thumbPath);
+            }
+
+            $this->imageModel->delete((int) $img['id']);
+        }
+
+        $portadaIndex = null;
+        foreach ($remainingImages as $index => $img) {
+            if ((int) $img['id'] === $portadaId) {
+                $portadaIndex = $index;
+                break;
+            }
+        }
+
+        if ($portadaIndex !== null && $portadaIndex !== 0) {
+            $reordered = $remainingImages;
+            $selected = array_splice($reordered, $portadaIndex, 1)[0];
+            array_unshift($reordered, $selected);
+
+            foreach ($reordered as $newOrder => $img) {
+                $this->imageModel->update((int) $img['id'], ['orden' => $newOrder]);
+            }
+        }
+
         if ($newFilesCount > 0) {
             $uploaded = $uploader->processMultiple($incomingFiles);
             foreach ($uploaded as $order => $paths) {
@@ -155,7 +206,7 @@ class NewsController extends BaseController
                     'id_noticia' => $newsId,
                     'ruta_imagen' => $paths['ruta_imagen'],
                     'ruta_thumbnail' => $paths['ruta_thumbnail'],
-                    'orden' => $existingCount + $order,
+                    'orden' => $remainingCount + $order,
                     'created_at' => date('Y-m-d H:i:s'),
                 ]);
             }

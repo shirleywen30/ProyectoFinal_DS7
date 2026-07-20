@@ -95,12 +95,20 @@ require ROOT_PATH . '/views/partials/admin_menu.php';
             <label>Imágenes (mínimo <?= MIN_NEWS_IMAGES ?> en total; formatos jpg, png, webp)</label>
 
             <?php if ($news !== null && !empty($news['imagenes'])): ?>
-                <p style="color:#6b7280;font-size:0.85rem">Imágenes actuales:</p>
-                <div class="image-preview-grid">
-                    <?php foreach ($news['imagenes'] as $img): ?>
-                        <img src="<?= UPLOAD_THUMB_URL . e(basename($img['ruta_thumbnail'])) ?>" alt="">
+                <p style="color:#6b7280;font-size:0.85rem">Imágenes actuales (× para eliminarla, radio para elegirla como miniatura de la noticia):</p>
+                <div class="image-preview-grid" id="current-images">
+                    <?php foreach ($news['imagenes'] as $index => $img): ?>
+                        <div class="image-preview-item" data-image-id="<?= (int) $img['id'] ?>">
+                            <img src="<?= UPLOAD_THUMB_URL . e(basename($img['ruta_thumbnail'])) ?>" alt="">
+                            <button type="button" class="image-preview-remove" data-remove-existing-image title="Eliminar esta imagen">×</button>
+                            <label class="thumbnail-select">
+                                <input type="radio" name="imagen_portada" value="<?= (int) $img['id'] ?>" <?= $index === 0 ? 'checked' : '' ?>>
+                                Miniatura
+                            </label>
+                        </div>
                     <?php endforeach; ?>
                 </div>
+                <div id="eliminar-imagenes-inputs"></div>
             <?php endif; ?>
 
             <input type="file" name="imagenes[]" multiple accept="image/jpeg,image/png,image/webp" style="margin-top:0.6rem">

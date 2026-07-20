@@ -238,6 +238,11 @@ label { font-weight: 600; font-size: 0.88rem; display: block; margin-bottom: 0.3
     transition: background var(--transition);
 }
 .image-preview-remove:hover { background: #922b21; }
+.thumbnail-select {
+    display: flex; align-items: center; gap: 0.3rem;
+    margin-top: 0.3rem; font-size: 0.75rem; color: var(--color-muted);
+    cursor: pointer;
+}
 
 .detail-images { display: flex; gap: 0.8rem; flex-wrap: wrap; margin: 1rem 0; }
 .detail-images img { width: 220px; height: 150px; object-fit: cover; border-radius: var(--radius); box-shadow: var(--shadow); }
