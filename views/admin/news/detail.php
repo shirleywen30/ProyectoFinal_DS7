@@ -74,9 +74,9 @@ require ROOT_PATH . '/views/partials/admin_menu.php';
 
     <p>Integridad de la noticia:
         <?php if ($integrityOk): ?>
-            <span class="integrity-ok">&#10003; Firma digital válida</span>
+            <span class="integrity-ok">Firma digital válida</span>
         <?php else: ?>
-            <span class="integrity-fail">&#10007; La firma digital no coincide (posible alteración de datos)</span>
+            <span class="integrity-fail">La firma digital no coincide (posible alteración de datos)</span>
         <?php endif; ?>
     </p>
 

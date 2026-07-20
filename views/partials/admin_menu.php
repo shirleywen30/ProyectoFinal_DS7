@@ -1,6 +1,5 @@
     <header class="admin-topbar">
         <div class="admin-brand">
-            <span class="admin-brand-icon">&#128240;</span>
             <span><?= e(APP_NAME) ?></span>
         </div>
         <div class="admin-user">
@@ -27,7 +26,7 @@
             <a href="<?= BASE_URL ?>/views/admin/comments/list.php" class="<?= ($activeMenu ?? '') === 'comments' ? 'active' : '' ?>">Comentarios</a>
         <?php endif; ?>
         <a href="<?= BASE_URL ?>/views/admin/news/reactions.php" class="<?= ($activeMenu ?? '') === 'reactions' ? 'active' : '' ?>">Reacciones</a>
-        <a href="<?= BASE_URL ?>/index.php" class="menu-home">&#8962; Volver a HOME</a>
+        <a href="<?= BASE_URL ?>/index.php" class="menu-home">Volver a HOME</a>
     </nav>
 
     <main class="admin-content">

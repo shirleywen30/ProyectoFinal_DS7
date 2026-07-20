@@ -25,7 +25,7 @@ $pageTitle = 'Iniciar sesión';
 <body>
 <div class="login-wrapper">
     <div class="login-card">
-        <h1>&#128240; <?= e(APP_NAME) ?></h1>
+        <h1><?= e(APP_NAME) ?></h1>
         <p style="text-align:center;color:#6b7280;margin-top:-0.5rem">Acceso administrativo</p>
 
         <?php flash(); ?>

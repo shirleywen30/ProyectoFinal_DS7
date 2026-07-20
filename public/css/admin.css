@@ -3,8 +3,8 @@
    ========================================================================== */
 
 :root {
-    --color-primary: #1a3b6d;
-    --color-primary-dark: #10254a;
+    --color-primary: #0e7490;
+    --color-primary-dark: #155e75;
     --color-accent: #c0392b;
     --color-bg: #eef1f6;
     --color-card: #ffffff;
@@ -250,8 +250,18 @@ label { font-weight: 600; font-size: 0.88rem; display: block; margin-bottom: 0.3
 .news-video { position: relative; padding-bottom: 56.25%; height: 0; max-width: 500px; margin: 1rem 0; }
 .news-video iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; border-radius: var(--radius); }
 
-.integrity-ok { color: #166534; font-weight: 700; }
-.integrity-fail { color: #991b1b; font-weight: 700; }
+.integrity-ok, .integrity-fail { font-weight: 700; display: inline-flex; align-items: center; gap: 0.4rem; }
+.integrity-ok { color: #166534; }
+.integrity-fail { color: #991b1b; }
+.integrity-ok::before, .integrity-fail::before {
+    content: "";
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.integrity-ok::before { background: #16a34a; }
+.integrity-fail::before { background: #dc2626; }
 
 @media (max-width: 700px) {
     .admin-menu { flex-direction: column; }
