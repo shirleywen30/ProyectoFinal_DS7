@@ -9,6 +9,6 @@ return [
     'port'     => '3306',
     'database' => 'sistema_noticias',
     'username' => 'root',
-    'password' => 'luifer123',
+    'password' => '',
     'charset'  => 'utf8mb4',
 ];
