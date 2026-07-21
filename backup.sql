@@ -1,3 +1,10 @@
+-- =============================================================================
+-- Este dump crea la base de datos si no existe y la selecciona automáticamente,
+-- para que cualquier persona pueda importarlo sin pasos previos.
+-- =============================================================================
+CREATE DATABASE IF NOT EXISTS `sistema_noticias` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE `sistema_noticias`;
+
 -- phpMyAdmin SQL Dump
 -- version 5.2.3
 -- https://www.phpmyadmin.net/
