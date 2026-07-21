@@ -47,7 +47,7 @@ $pageTitle = 'Iniciar sesión';
             </div>
             <button type="submit" class="btn" style="width:100%">Ingresar</button>
         </form>
-        <p style="text-align:center;margin-top:1rem"><a href="<?= BASE_URL ?>/index.php">&larr; Volver al sitio público</a></p>
+        <p style="text-align:center;margin-top:1rem"><a href="<?= BASE_URL ?>/index.php" style="text-decoration:none">Volver al sitio público</a></p>
     </div>
 </div>
 </body>
